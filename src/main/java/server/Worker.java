@@ -9,10 +9,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.TimeZone;
 
 import static server.Server.*;
 
@@ -38,8 +38,7 @@ public class Worker implements Runnable {
                 final ArrayList<String> requestData = getRequestData(br);
                 try {
                     parseRequest(requestData, os);
-                } catch (ParseException e) {
-                    e.printStackTrace();
+                } catch (ParseException | IndexOutOfBoundsException e) {
                 }
                 br.close();
                 is.close();
@@ -67,49 +66,71 @@ public class Worker implements Runnable {
 
         String[] requestParts = request.get(0).split(" ");
         String method = requestParts[0];
-        String path = URLDecoder.decode(requestParts[1], encoding);
+        String _path = path + URLDecoder.decode(requestParts[1].replace("?", " ").split(" ")[0], encoding);
+        if (requestParts[1].contains("../../")) {
+            addHeader(getMainHeaders(), Statuses.CODE_FORBIDDEN, os);
+            return;
+        }
         if (!method.equals(Methods.GET) && !method.equals(Methods.HEAD)) {
             addHeader(getMainHeaders(), Statuses.CODE_METHOD_NOT_ALLOWED, os);
             return;
         }
-        File file = new File(path);
+        File file = new File(_path);
         if (!file.exists()) {
             addHeader(getMainHeaders(), Statuses.CODE_NOT_FOUND, os);
             return;
         }
-        String lenghtHeader = getFileContentLength(file.length());
-        String file_extHeader = getFileExtension(file.getName().replace(".", " ").split(" ")[1]);
-        String headers = lenghtHeader + file_extHeader;
-        addHeader(headers, Statuses.CODE_OK, os);
+        if (file.isFile()) {
+            String lenghtHeader = getFileContentLength(file.length());
+            String[] extSplit = file.getName().replace(".", " ").split(" ");
+            String file_extHeader = getFileExtension(extSplit[extSplit.length - 1]);
+            String headers = getMainHeaders() + file_extHeader + lenghtHeader;
+            addHeader(headers, Statuses.CODE_OK, os);
+            if (method.equals(Methods.GET))
+                sendFileToBody(file, os);
+        } else {
+            findIndexFile(_path + "index.html", os, method);
+        }
+    }
 
-        InputStream is = new FileInputStream(file);
-        sendFile(is, os);
+    private void sendFileToBody(File file, OutputStream os) throws IOException {
+        FileInputStream fs = new FileInputStream(file);
+        sendFile(fs, os);
         os.flush();
     }
 
-//    private boolean checkFileExists(String path) {
-//        File file = new File(path);
-//        if (!file.exists())
-//            return false;
-//        return true;
-//    }
+    private void findIndexFile(String _path, OutputStream os, String method) throws IOException {
+        File file = new File(_path);
+        if (!file.exists()) {
+            addHeader(getMainHeaders(), Statuses.CODE_FORBIDDEN, os);
+            return;
+        }
+        String lenghtHeader = getFileContentLength(file.length());
+        String[] extSplit = file.getName().replace(".", " ").split(" ");
+        String file_extHeader = getFileExtension(extSplit[extSplit.length - 1]);
+        String headers = getMainHeaders() + file_extHeader + lenghtHeader;
+        addHeader(headers, Statuses.CODE_OK, os);
 
-    private String getMainHeaders() throws ParseException {
-        SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MMM-dd HH:mm:ss");
-        dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
-        String dateString = String.valueOf(dateFormatGmt.parse(dateFormatGmt.format(new Date())));
+        if (method.equals(Methods.GET))
+            sendFileToBody(file, os);
+    }
+
+    private String getMainHeaders() {
+        final String dateString = DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")));
         return String.format(
                 "Server: %s\r\nConnection: %s\r\nDate: %s\r\n",
                 serverName, connection, dateString
         );
     }
 
-    private void sendFile(InputStream is, OutputStream os) throws IOException {
-        byte[] buffer = new byte[bufferSize];
-        int len = is.read(buffer);
-        while (len != -1) {
-            os.write(buffer, 0, len);
-            len = is.read(buffer);
+    private void sendFile(FileInputStream fs, OutputStream os) throws IOException {
+        final byte[] buff = new byte[bufferSize];
+        int read = 0;
+        while (read != -1) {
+            read = fs.read(buff);
+            if (read != -1) {
+                os.write(buff, 0, read);
+            }
         }
     }
 
@@ -123,7 +144,7 @@ public class Worker implements Runnable {
 
     private void addHeader(String headers, int statusCode, OutputStream os) throws IOException {
         String statusString = String.format("%s %d %s\r\n", http_version, statusCode, Statuses.getStatus(statusCode));
-        final String msg = statusString + headers;
+        final String msg = statusString + headers + "\r\n";
         os.write(msg.getBytes());
     }
 }

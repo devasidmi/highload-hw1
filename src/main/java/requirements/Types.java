@@ -2,16 +2,16 @@ package requirements;
 
 public class Types {
 
-    public static final String HTML = "text/html";
-    public static final String CSS = "text/css";
-    public static final String JS = "application/javascript";
-    public static final String JPG = "image/jpg";
-    public static final String JPEG = "image/jpeg";
-    public static final String PNG = "image/png";
-    public static final String GIF = "image/gif";
-    public static final String SWF = "application/x-shockwave-flash";
-    public static final String plain = "text/plain";
-    public static final String octet_stream = "application/octet-stream";
+    private static final String HTML = "text/html";
+    private static final String CSS = "text/css";
+    private static final String JS = "application/javascript";
+    private static final String JPG = "image/jpg";
+    private static final String JPEG = "image/jpeg";
+    private static final String PNG = "image/png";
+    private static final String GIF = "image/gif";
+    private static final String SWF = "application/x-shockwave-flash";
+    private static final String plain = "text/plain";
+    private static final String octet_stream = "application/octet-stream";
 
     public static String getType(String ext) {
         switch (ext) {
@@ -22,7 +22,7 @@ public class Types {
             case "js":
                 return JS;
             case "jpg":
-                return JPG;
+                return JPEG;
             case "jpeg":
                 return JPEG;
             case "png":
@@ -31,6 +31,8 @@ public class Types {
                 return GIF;
             case "html":
                 return HTML;
+            case "swf":
+                return SWF;
             case "txt":
                 return plain;
             default:
