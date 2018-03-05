@@ -7,12 +7,12 @@ import java.util.List;
 
 public class Server {
 
-    public static final String indexFile = "index.html";
-    public static final int bufferSize = 10 * 1024 * 1024;
-    public static final String serverName = "vasidmi server";
-    public static final String connection = "close";
-    public static final String encoding = "ASCII";
-    public static final String http_version = "HTTP/1.1";
+    static final String indexFile = "index.html";
+    private static final int bufferSize = 10 * 1024 * 1024;
+    static final String serverName = "vasidmi server";
+    static final String connection = "close";
+    static final String encoding = "ASCII";
+    static final String http_version = "HTTP/1.1";
 
     private String path;
     private int port;
@@ -33,7 +33,7 @@ public class Server {
             for (int i = 0; i != threads.size(); ++i) {
                 threads.get(i).join();
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
 

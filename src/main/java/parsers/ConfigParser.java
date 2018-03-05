@@ -1,6 +1,9 @@
 package parsers;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 
 
@@ -17,17 +20,15 @@ public class ConfigParser {
             InputStream mInputStream = new FileInputStream(mFile);
             mConfigProperties.load(mInputStream);
 
-            String port = mConfigProperties.getProperty(PORT).split(" #")[0].replace(" ","");
-            String thread_limit = mConfigProperties.getProperty(THREAD_LIMIT).split(" #")[0].replace(" ","");
-            String document_root = mConfigProperties.getProperty(DOCUMENT_ROOT).split(" #")[0].replace(" ","");
+            String port = mConfigProperties.getProperty(PORT).split(" #")[0].replace(" ", "");
+            String thread_limit = mConfigProperties.getProperty(THREAD_LIMIT).split(" #")[0].replace(" ", "");
+            String document_root = mConfigProperties.getProperty(DOCUMENT_ROOT).split(" #")[0].replace(" ", "");
 
             Config mConfig = new Config(port, thread_limit, document_root);
 
             mInputStream.close();
             return mConfig;
 
-        } catch (FileNotFoundException e) {
-            return null;
         } catch (IOException e) {
             return null;
         }

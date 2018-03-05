@@ -9,10 +9,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URLDecoder;
 import java.text.ParseException;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import static server.Server.*;
 
@@ -30,21 +29,19 @@ public class Worker implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
-            try (Socket socket = getSocket()) {
-                final OutputStream os = socket.getOutputStream();
-                final InputStream is = socket.getInputStream();
-                final BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                final ArrayList<String> requestData = getRequestData(br);
-                try {
-                    parseRequest(requestData, os);
-                } catch (ParseException | IndexOutOfBoundsException e) {
-                }
-                br.close();
-                is.close();
-                os.close();
-            } catch (IOException e) {
+        while (true) try (Socket socket = getSocket()) {
+            final OutputStream os = socket.getOutputStream();
+            final InputStream is = socket.getInputStream();
+            final BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            final ArrayList<String> requestData = getRequestData(br);
+            try {
+                parseRequest(requestData, os);
+            } catch (ParseException | IndexOutOfBoundsException ignored) {
             }
+            br.close();
+            is.close();
+            os.close();
+        } catch (IOException ignored) {
         }
     }
 
@@ -89,7 +86,7 @@ public class Worker implements Runnable {
             if (method.equals(Methods.GET))
                 sendFileToBody(file, os);
         } else {
-            findIndexFile(_path + "index.html", os, method);
+            findIndexFile(_path + indexFile, os, method);
         }
     }
 
@@ -116,10 +113,13 @@ public class Worker implements Runnable {
     }
 
     private String getMainHeaders() {
-        final String dateString = DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")));
+
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
+        Calendar cal = Calendar.getInstance(TimeZone.getDefault());
+
         return String.format(
                 "Server: %s\r\nConnection: %s\r\nDate: %s\r\n",
-                serverName, connection, dateString
+                serverName, connection, cal.getTime().toString()
         );
     }
 
