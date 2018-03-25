@@ -64,7 +64,7 @@ public class Worker implements Runnable {
         String[] requestParts = request.get(0).split(" ");
         String method = requestParts[0];
         String _path = path + URLDecoder.decode(requestParts[1].replace("?", " ").split(" ")[0], encoding);
-        if (requestParts[1].contains("../../")) {
+        if (requestParts[1].contains("../")) {
             addHeader(getMainHeaders(), Statuses.CODE_FORBIDDEN, os);
             return;
         }

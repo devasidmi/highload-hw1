@@ -20,9 +20,9 @@ public class ConfigParser {
             InputStream mInputStream = new FileInputStream(mFile);
             mConfigProperties.load(mInputStream);
 
-            String port = mConfigProperties.getProperty(PORT).split(" #")[0].replace(" ", "");
-            String thread_limit = mConfigProperties.getProperty(THREAD_LIMIT).split(" #")[0].replace(" ", "");
-            String document_root = mConfigProperties.getProperty(DOCUMENT_ROOT).split(" #")[0].replace(" ", "");
+            String port = mConfigProperties.getProperty(PORT).split("#")[0].trim();
+            String thread_limit = mConfigProperties.getProperty(THREAD_LIMIT).split("#")[0].trim();
+            String document_root = mConfigProperties.getProperty(DOCUMENT_ROOT).split("#")[0].trim();
 
             Config mConfig = new Config(port, thread_limit, document_root);
 
